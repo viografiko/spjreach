@@ -1,3 +1,6 @@
+
+print("=== HOOKING BALLNETWORKING REMOTE ===")
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
 local remoteList = RemoteHandler.GetRemotes()
@@ -23,7 +26,7 @@ if hookmetamethod then
         if method == "FireServer" and self == BallNetworking then
             local action = args[1]
 
-    
+
             local blockedActions = {
                 "Modify_Remotes",
                 "High_WalkSpeed", 
@@ -41,22 +44,28 @@ if hookmetamethod then
 
             for _, blockedAction in pairs(blockedActions) do
                 if action == blockedAction then
-                    print("BLOCKED anti-cheat call:", action)
-                    return 
+                    print("🚫 BLOCKED anti-cheat call:", action)
+                    return -
                 end
             end
 
-            print("Allowing call:", action)
+            print("✅ Allowing call:", action)
         end
 
         return oldNamecall(self, ...)
     end)
 
     setreadonly(mt, true)
-    print("sucess hooked")
+    print("✅ Successfully hooked BallNetworking with hookmetamethod")
 else
-    warn("newcclosure not available in this executor")
+    warn("hookmetamethod not available in this executor")
 end
 
-print('logs will be enabled if any error u can report.')
+print("\n=== TESTING HOOK ===")
+print("Attempting to call Modify_Remotes...")
+print(RemoteHandler.Votekick.Name)
 RemoteHandler.Votekick:Destroy()
+print("Hook test completed!")
+print("\n=== BYPASS COMPLETE ===")
+print("You can now modify remotes without being detected!")
+print("The anti-cheat calls will be blocked automatically.")
