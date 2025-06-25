@@ -322,8 +322,8 @@ local BallNetworking = RemoteHandler.BallNetworking()
 
 
 
-if hookmetamethod then
-    print("Using hookmetamethod...")
+if newcclosure then
+
     
     local mt = getrawmetatable(game)
     local oldNamecall = mt.__namecall
@@ -368,7 +368,7 @@ if hookmetamethod then
     
     setreadonly(mt, true)
 else
-    warn("hookmetamethod not available in this executor")
+    warn("shit exec my bro")
 end
 
 
@@ -384,7 +384,17 @@ end
             })
         end
     })
-
+        Tabs.fun:AddSlider("WalkSpeed", {
+        Title = "Change u walkspeed",
+        Description = "default 16",
+        Default = 16,
+        Min = 1,
+        Max = 150,
+        Rounding = 0,
+        Callback = function(value)
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end
+    })
     Tabs.Main:AddToggle("BallOwnerToggle", {
         Title = "Enable Ball Owner",
         Description = "Makes you get the ball first",
@@ -412,6 +422,7 @@ end
             createReachCircle()
         end
     })
+
 
 
     Tabs.esp:AddToggle("EspToggle", {
