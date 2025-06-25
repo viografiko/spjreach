@@ -2,21 +2,29 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
 local remoteList = RemoteHandler.GetRemotes()
-local success = pcall(function()
-    local testFunc = function() return "original" end
-    local hooked = hookfunction(testFunc, function() return "hooked" end)
-    assert(testFunc() == "hooked")
-end)
-
-if not success then 
-return error('hookfunction is not supported.') 
-end
-
-
 local BallNetworking = RemoteHandler.BallNetworking()
 local kick = remoteList[6]
 print("BallNetworking remote found:", BallNetworking)
 print("Remote name:", BallNetworking.Name)
+
+local supported = true
+local success = pcall(function()
+	getrawmetatable(game)
+	setreadonly({}, false)
+	newcclosure(function() end)
+	local f = function() return "original" end
+	local h = hookfunction(f, function() return "hooked" end)
+	assert(f() == "hooked")
+end)
+if not success then
+	supported = false
+	error("Exec not supported")
+	error("hookfunction is not supported.")
+else
+	print("Exec functions supported")
+end
+
+
 
 
 if hookmetamethod then
@@ -169,7 +177,7 @@ Tabs.Status:AddParagraph({
 })
 Tabs.Status:AddParagraph({
     Title = "Script Version",
-    Content = "0.2.3 (FIXED)"
+    Content = "0.2.4"
 })
 local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -372,32 +380,48 @@ do
         Duration = 8
     })
 
+local valuesFolder = game:GetService("ReplicatedStorage"):WaitForChild("Values")
+local debounceValue = valuesFolder:WaitForChild("OTDebounce")
 
-    Tabs.fun:AddButton({
-        Title = "Get Free Plag",
-        Description = "Activates free plag functionality",
-        Callback = function()
-            Window:Dialog({
-                Title = "Confirm Free Plag",
-                Content = "Are you sure you want to activate free plag?",
-                Buttons = {
-                    {
-                        Title = "Confirm",
-                        Callback = function()
-                            activateFreePlag()
-                            print("Free Plag activated")
-                        end
-                    },
-                    {
-                        Title = "Cancel",
-                        Callback = function()
-                            print("Free Plag activation cancelled")
-                        end
-                    }
+
+local originalDefault = debounceValue.Value
+
+
+local Input2 = Tabs.fun:AddInput("Input5", {
+    Title = "Changed cooldown of dribble (0.25 = default)",
+    Default = '0.25',
+    Placeholder = '0.25',
+    Numeric = true,
+    Finished = false,
+    Callback = function(value)
+        debounceValue.Value = value
+    end
+})
+Tabs.fun:AddButton({
+    Title = "Reset Cooldown",
+    Description = "Restore the default cooldown of dribble",
+    Callback = function()
+        Window:Dialog({
+            Title = "Reset Cooldown",
+            Content = "Are you sure you want to reset to the default cooldown?",
+            Buttons = {
+                {
+                    Title = "Confirm",
+                    Callback = function()
+                        debounceValue.Value = originalDefault
+                    end
+                },
+                {
+                    Title = "Cancel",
+                    Callback = function()
+                        print('ok')
+                    end
                 }
-            })
-        end
-    })
+            }
+        })
+    end
+})
+
 game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
 
     local Input = Tabs.fun:AddInput("Input", {
@@ -426,18 +450,19 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
     })
 
 
-    Tabs.Main:AddSlider("ReachSlider", {
-        Title = "Reach Distance",
-        Description = "Set the reach distance (default: 10)",
-        Default = 10,
-        Min = 1,
-        Max = 1000,
-        Rounding = 0,
-        Callback = function(value)
-            reach = value
-            createReachCircle()
-        end
-    })
+Tabs.Main:AddInput("ReachInput", {
+    Title = "Reach Distance",
+    Description = "Set the reach distance (default: 10)",
+    Default = "10",
+    Placeholder = "10",
+    Numeric = true,
+    Finished = true,
+    Callback = function(value)
+        reach = tonumber(value) or 10
+        createReachCircle()
+    end
+})
+
 
 
 
@@ -574,17 +599,6 @@ task.spawn(function()
     end
 end)
 
-Tabs.fun:AddSlider("BoxHandleSizeSlider", {
-    Title = "Changed cooldown of dribble",
-    Description = "Adjust cooldown of dribble",
-    Default = 1,
-    Min = 0,
-    Max = 10,
-    Rounding = 2,
-    Callback = function(value)
-        game:GetService("ReplicatedStorage").Values.OTDebounce.Value = value
-    end
-})
 Tabs.fun:AddSlider('ModifyCurve', {
     Title = 'Modify Curve',
     Description = 'Change the curve of the ball',
@@ -776,7 +790,7 @@ RunService.RenderStepped:Connect(function()
 	if moveInput.down then moveDir -= Vector3.new(0, 1, 0) end
 
 	if moveDir.Magnitude > 0 then
-		moveDir = moveDir.Unit * math.clamp(_G.TPSBallSpeed or 0, 0, 300)
+		moveDir = moveDir.Unit * math.clamp(_G.TPSBallSpeed or 0, 0, _G.TPSBallSpeed)
 		currentBall.Velocity = moveDir
 	else
 		currentBall.Velocity *= 0.9
@@ -802,17 +816,21 @@ Tabs.fun:AddToggle("ControlBallToggle", {
 	end
 })
 
-Tabs.fun:AddSlider("BallSpeedSlider", {
+Tabs.fun:AddInput("BallSpeedInput", {
 	Title = "Control Speed",
-	Description = "Set your ball fly speed (0–300)",
-	Default = _G.TPSBallSpeed,
-	Min = 0,
-	Max = 300,
-	Rounding = 0,
+	Description = "Set your ball fly speed (0-1000)",
+	Default = tostring(_G.TPSBallSpeed),
+	Placeholder = "0 - 1000",
+	Numeric = true,
+	Finished = true,
 	Callback = function(value)
-		_G.TPSBallSpeed = value
+		local num = tonumber(value)
+		if num and num >= 0 and num <= 1000 then
+			_G.TPSBallSpeed = num
+		end
 	end
 })
+
 
 local Keybind = Tabs.fun:AddKeybind("BallControlKeybind", {
     Title = "Toggle Ball Control (Keybind)",
