@@ -311,34 +311,32 @@ do
                         Title = "Confirm",
                         Callback = function()
                             
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
 local remoteList = RemoteHandler.GetRemotes()
 local votekick = remoteList[6]
 
-
 local BallNetworking = RemoteHandler.BallNetworking()
+print("BallNetworking remote found:", BallNetworking)
+print("Remote name:", BallNetworking.Name)
 
+if hookmetamethod then
+    print("Using hookmetamethod...")
 
-
-if newcclosure then
-
-    
     local mt = getrawmetatable(game)
     local oldNamecall = mt.__namecall
-    
+
     setreadonly(mt, false)
-    
+
     mt.__namecall = newcclosure(function(self, ...)
         local method = getnamecallmethod()
         local args = {...}
-        
+
 
         if method == "FireServer" and self == BallNetworking then
             local action = args[1]
-            
 
+    
             local blockedActions = {
                 "Modify_Remotes",
                 "High_WalkSpeed", 
@@ -353,26 +351,30 @@ if newcclosure then
                 "Auto_Catch_Suspect",
                 "Enlarged_Hitbox"
             }
-            
+
             for _, blockedAction in pairs(blockedActions) do
                 if action == blockedAction then
-
+                    print("BLOCKED anti-cheat call:", action)
                     return 
                 end
             end
-            
+
+            print("Allowing call:", action)
         end
-        
+
         return oldNamecall(self, ...)
     end)
-    
+
     setreadonly(mt, true)
+    print("sucess hooked")
 else
-    warn("shit exec my bro")
+    warn("newcclosure not available in this executor")
 end
 
+print('logs will be enabled if any error u can report.')
+print('anti-kick remote:' RemoteHandler.Votekick.Name)
+RemoteHandler.Votekick:Destroy()
 
-                        end
                     },
                     {
                         Title = "Cancel",
