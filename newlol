@@ -70,7 +70,7 @@ elseif hookfunction then
     
     local oldFireServer = BallNetworking.FireServer
     
-    BallNetworking.FireServer = hookfunction(oldFireServer, function(self, action, ...)
+   hookfunction(oldFireServer, function(self, action, ...)
 
         local blockedActions = {
             "Modify_Remotes",
@@ -89,16 +89,15 @@ elseif hookfunction then
         
         for _, blockedAction in pairs(blockedActions) do
             if action == blockedAction then
-                print("🚫 BLOCKED anti-cheat call:", action)
                 return 
             end
         end
         
-        print("✅ Allowing call:", action)
+
         return oldFireServer(self, action, ...)
     end)
     
-    print("✅ Successfully hooked BallNetworking with hookfunction")
+
 
 end
 
@@ -170,7 +169,7 @@ Tabs.Status:AddParagraph({
 })
 Tabs.Status:AddParagraph({
     Title = "Script Version",
-    Content = "0.2.3"
+    Content = "0.2.3 (FIXED)"
 })
 local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
