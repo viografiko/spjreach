@@ -384,15 +384,17 @@ end
             })
         end
     })
-        Tabs.fun:AddSlider("WalkSpeed", {
-        Title = "Change u walkspeed",
-        Description = "default 16",
-        Default = 16,
-        Min = 1,
-        Max = 150,
-        Rounding = 0,
-        Callback = function(value)
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+
+    local Input = Tabs.fun:AddInput("Input", {
+        Title = "walkspeed",
+        Default = "a",
+        Placeholder = "16",
+        Numeric = false, 
+        Finished = false, 
+        Callback = function(Value)
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+
         end
     })
     Tabs.Main:AddToggle("BallOwnerToggle", {
