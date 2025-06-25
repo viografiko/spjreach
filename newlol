@@ -1,3 +1,7 @@
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
+local remoteList = RemoteHandler.GetRemotes()
 local success = pcall(function()
     local testFunc = function() return "original" end
     local hooked = hookfunction(testFunc, function() return "hooked" end)
@@ -7,6 +11,102 @@ end)
 if not success then 
 return error('hookfunction is not supported.') 
 end
+
+
+local BallNetworking = RemoteHandler.BallNetworking()
+local kick = remoteList[6]
+print("BallNetworking remote found:", BallNetworking)
+print("Remote name:", BallNetworking.Name)
+
+
+if hookmetamethod then
+
+    
+    local mt = getrawmetatable(game)
+    local oldNamecall = mt.__namecall
+    
+    setreadonly(mt, false)
+    
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+
+        if method == "FireServer" and self == BallNetworking then
+            local action = args[1]
+            
+
+            local blockedActions = {
+                "Modify_Remotes",
+                "High_WalkSpeed", 
+                "Exploiting_Ball",
+                "Script_Executer",
+                "RemoteExploit",
+                "Shop_Exploit",
+                "No_Clip",
+                "Instances",
+                "Deleting",
+                "Auto_Hit",
+                "Auto_Catch_Suspect",
+                "Enlarged_Hitbox"
+            }
+            
+            for _, blockedAction in pairs(blockedActions) do
+                if action == blockedAction then
+                    return 
+                end
+            end
+            
+        end
+        
+        return oldNamecall(self, ...)
+    end)
+    
+    setreadonly(mt, true)
+
+
+elseif hookfunction then
+    print("Using hookfunction...")
+    
+    local oldFireServer = BallNetworking.FireServer
+    
+    BallNetworking.FireServer = hookfunction(oldFireServer, function(self, action, ...)
+
+        local blockedActions = {
+            "Modify_Remotes",
+            "High_WalkSpeed", 
+            "Exploiting_Ball",
+            "Script_Executer",
+            "RemoteExploit",
+            "Shop_Exploit",
+            "No_Clip",
+            "Instances",
+            "Deleting",
+            "Auto_Hit",
+            "Auto_Catch_Suspect",
+            "Enlarged_Hitbox"
+        }
+        
+        for _, blockedAction in pairs(blockedActions) do
+            if action == blockedAction then
+                print("🚫 BLOCKED anti-cheat call:", action)
+                return 
+            end
+        end
+        
+        print("✅ Allowing call:", action)
+        return oldFireServer(self, action, ...)
+    end)
+    
+    print("✅ Successfully hooked BallNetworking with hookfunction")
+
+end
+
+pcall(function()
+    BallNetworking:FireServer("Modify_Remotes")
+end)
+
+kick:InvokeServer('TESTTARGET', 'TESTTARGET')
 
 setthreadcontext(5)
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
@@ -293,93 +393,6 @@ do
                         Title = "Cancel",
                         Callback = function()
                             print("Free Plag activation cancelled")
-                        end
-                    }
-                }
-            })
-        end
-    })
-    Tabs.fun:AddButton({
-        Title = "Bypass vote-kick",
-        Description = "bypass vote-kick and then people cant kick u",
-        Callback = function()
-            Window:Dialog({
-                Title = "Confirm anti-votekick",
-                Content = "are you sure u want to enable that?",
-                Buttons = {
-                    {
-                        Title = "Confirm",
-                        Callback = function()
-                            
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
-local remoteList = RemoteHandler.GetRemotes()
-local votekick = remoteList[6]
-
-local BallNetworking = RemoteHandler.BallNetworking()
-print("BallNetworking remote found:", BallNetworking)
-print("Remote name:", BallNetworking.Name)
-
-if hookmetamethod then
-    print("Using hookmetamethod...")
-
-    local mt = getrawmetatable(game)
-    local oldNamecall = mt.__namecall
-
-    setreadonly(mt, false)
-
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-
-
-        if method == "FireServer" and self == BallNetworking then
-            local action = args[1]
-
-    
-            local blockedActions = {
-                "Modify_Remotes",
-                "High_WalkSpeed", 
-                "Exploiting_Ball",
-                "Script_Executer",
-                "RemoteExploit",
-                "Shop_Exploit",
-                "No_Clip",
-                "Instances",
-                "Deleting",
-                "Auto_Hit",
-                "Auto_Catch_Suspect",
-                "Enlarged_Hitbox"
-            }
-
-            for _, blockedAction in pairs(blockedActions) do
-                if action == blockedAction then
-                    print("BLOCKED anti-cheat call:", action)
-                    return 
-                end
-            end
-
-            print("Allowing call:", action)
-        end
-
-        return oldNamecall(self, ...)
-    end)
-
-    setreadonly(mt, true)
-    print("sucess hooked")
-else
-    warn("newcclosure not available in this executor")
-end
-
-print('logs will be enabled if any error u can report.')
-print('anti-kick remote:' RemoteHandler.Votekick.Name)
-RemoteHandler.Votekick:Destroy()
-
-                    },
-                    {
-                        Title = "Cancel",
-                        Callback = function()
-                            print('ok')
                         end
                     }
                 }
