@@ -1,11 +1,12 @@
-
+task.wait(1)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
 local remoteList = RemoteHandler.GetRemotes()
 local BallNetworking = RemoteHandler.BallNetworking()
 local kick = remoteList[6]
-print("BallNetworking remote found:", BallNetworking)
-print("Remote name:", BallNetworking.Name)
+print("Anti-Cheat remote found:", BallNetworking)
+print('Hooking into remote.')
+
 
 local supported = true
 local success = pcall(function()
@@ -26,7 +27,7 @@ end
 
 
 
-
+local inicio = tick()
 if hookmetamethod then
 
     
@@ -106,9 +107,13 @@ elseif hookfunction then
     end)
     
 
-
 end
-
+local fim = tick()
+local tempoDecorrido = fim - inicio
+print("Bypassed in " .. tempoDecorrido .. " seconds")
+print('Bypassed anti-cheat')
+print('Please wait when script loads.')
+task.wait(1)
 pcall(function()
     BallNetworking:FireServer("Modify_Remotes")
 end)
@@ -177,7 +182,7 @@ Tabs.Status:AddParagraph({
 })
 Tabs.Status:AddParagraph({
     Title = "Script Version",
-    Content = "0.2.4"
+    Content = "0.2.5"
 })
 local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -421,7 +426,31 @@ Tabs.fun:AddButton({
         })
     end
 })
-
+Tabs.Main:AddButton({
+    Title = "Free Plag",
+    Description = "gives u free plag",
+    Callback = function()
+            Window:Dialog({
+            Title = "Active free plag",
+            Content = "Are you sure you want to active free plag?",
+            Buttons = {
+                {
+                    Title = "Confirm",
+                    Callback = function()
+                        activateFreePlag()
+                    end
+                },
+                {
+                    Title = "Cancel",
+                    Callback = function()
+                        print('ok')
+                    end
+                }
+            }
+        })
+        
+    end
+})
 game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
 
     local Input = Tabs.fun:AddInput("Input", {
@@ -705,25 +734,17 @@ Tabs.AutoFarm:AddToggle("AutoKeyToggle", {
 
 
 local camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
 _G.TPSBallSpeed = 200
 
 local BALL_FOLDER = workspace:WaitForChild("Balls")
 local BALL_NAME_PREFIX = "TPS"
 
-local ContextActionService = game:GetService("ContextActionService")
-
-local camera = workspace.CurrentCamera
-
 local controlling = false
 local currentBall = nil
-local moveInput = {
-	forward = false,
-	left = false,
-	right = false,
-	up = false,
-	down = false
-}
 
 local function getTPSBall()
 	for _, obj in ipairs(BALL_FOLDER:GetChildren()) do
@@ -734,38 +755,11 @@ local function getTPSBall()
 	return nil
 end
 
-local function onMoveAction(actionName, inputState, input)
-	if not controlling then return Enum.ContextActionResult.Pass end
-
-	local isPressed = inputState == Enum.UserInputState.Begin
-	local key = input.KeyCode
-
-	if key == Enum.KeyCode.W then moveInput.forward = isPressed end
-	if key == Enum.KeyCode.A then moveInput.left = isPressed end
-	if key == Enum.KeyCode.S then moveInput.backward = isPressed end
-	if key == Enum.KeyCode.D then moveInput.right = isPressed end
-	if key == Enum.KeyCode.Space then moveInput.up = isPressed end
-	if key == Enum.KeyCode.LeftShift then moveInput.down = isPressed end
-
-	return Enum.ContextActionResult.Sink
-end
-
-local function bindBallControls()
-	ContextActionService:BindAction("TPSBallMovement", onMoveAction, false,
-		Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D,
-		Enum.KeyCode.Space, Enum.KeyCode.LeftShift)
-end
-
-local function unbindBallControls()
-	ContextActionService:UnbindAction("TPSBallMovement")
-end
-
 local function startControlling(ball)
 	currentBall = ball
 	camera.CameraSubject = ball
 	camera.CameraType = Enum.CameraType.Custom
 	controlling = true
-	bindBallControls()
 end
 
 local function stopControlling()
@@ -773,21 +767,15 @@ local function stopControlling()
 	camera.CameraType = Enum.CameraType.Custom
 	currentBall = nil
 	controlling = false
-	unbindBallControls()
 end
+
+
 
 RunService.RenderStepped:Connect(function()
 	if not controlling or not currentBall then return end
 
 	local camCF = camera.CFrame
-	local moveDir = Vector3.zero
-
-	if moveInput.forward then moveDir += camCF.LookVector end
-	if moveInput.backward then moveDir -= camCF.LookVector end
-	if moveInput.left then moveDir -= camCF.RightVector end
-	if moveInput.right then moveDir += camCF.RightVector end
-	if moveInput.up then moveDir += Vector3.new(0, 1, 0) end
-	if moveInput.down then moveDir -= Vector3.new(0, 1, 0) end
+	local moveDir = camCF.LookVector -- Always move forward in camera direction
 
 	if moveDir.Magnitude > 0 then
 		moveDir = moveDir.Unit * math.clamp(_G.TPSBallSpeed or 0, 0, _G.TPSBallSpeed)
