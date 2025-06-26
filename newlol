@@ -1,13 +1,46 @@
-task.wait(1)
+task.wait(3)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteHandler = require(ReplicatedStorage.Modules.RemoteHandler)
 local remoteList = RemoteHandler.GetRemotes()
 local BallNetworking = RemoteHandler.BallNetworking()
 local kick = remoteList[6]
-print("Anti-Cheat remote found:", BallNetworking)
-print('Hooking into remote.')
 
+getgenv().cprint = function(text, color)
+    local printId = "##" .. tostring(math.random(1, 1e9))
+    print(text .. " " .. printId)
 
+    task.spawn(function()
+        local DevConsole = game:GetService("CoreGui").DevConsoleMaster.DevConsoleWindow.DevConsoleUI
+        local ClientLog = DevConsole.MainView.ClientLog
+
+        for _, child in ipairs(ClientLog:GetChildren()) do
+            local msg = child:FindFirstChild("msg")
+            if msg and msg.Text:find(printId) then
+                msg.TextColor3 = color
+                msg.Text = msg.Text:gsub(printId, "")
+                return
+            end
+        end
+
+        local connection
+        connection = ClientLog.ChildAdded:Connect(function(child)
+            local msg = child:FindFirstChild("msg")
+            if msg and msg.Text:find(printId) then
+                msg.TextColor3 = color
+                msg.Text = msg.Text:gsub(printId, "")
+                connection:Disconnect()
+            end
+        end)
+    end)
+end
+
+-- add your prints here using cprint, i will probably add some here for you to use idk
+
+--[[
+cprint("Successfully loaded!", Color3.fromRGB(0, 255, 0))
+cprint("Warning: Low memory", Color3.fromRGB(255, 165, 0))
+cprint("Error: Script failed", Color3.fromRGB(255, 0, 0))
+]]--
 local supported = true
 local success = pcall(function()
 	getrawmetatable(game)
@@ -19,10 +52,9 @@ local success = pcall(function()
 end)
 if not success then
 	supported = false
-	error("Exec not supported")
-	error("hookfunction is not supported.")
+	cprint("Error: Exec not supported", Color3.fromRGB(255, 0, 0))
 else
-	print("Exec functions supported")
+	cprint("Functions are supported", Color3.fromRGB(0, 255, 0))
 end
 
 
@@ -110,9 +142,9 @@ elseif hookfunction then
 end
 local fim = tick()
 local tempoDecorrido = fim - inicio
-print("Bypassed in " .. tempoDecorrido .. " seconds")
-print('Bypassed anti-cheat')
-print('Please wait when script loads.')
+cprint("Bypassed in " .. tempoDecorrido .. " seconds", Color3.fromRGB(255, 165, 0))
+cprint("Sucessfull bypassed the anti-cheat", Color3.fromRGB(0, 255, 0))
+cprint("Please wait when script loads.", Color3.fromRGB(255, 165, 0))
 task.wait(1)
 pcall(function()
     BallNetworking:FireServer("Modify_Remotes")
@@ -167,6 +199,7 @@ local Tabs = {
     fun = Window:AddTab({ Title = "Fun", Icon = "star" }),
     esp = Window:AddTab({ Title = "ESP", Icon = "eye" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
+    Ball = Window:AddTab({ Title = "Ball", Icon = "circle" }),
     AutoFarm = Window:AddTab({ Title = "AutoFarm", Icon = "dollar-sign" }),
     Status = Window:AddTab({ Title = "Status", Icon = "signal" })
 }
@@ -182,7 +215,7 @@ Tabs.Status:AddParagraph({
 })
 Tabs.Status:AddParagraph({
     Title = "Script Version",
-    Content = "0.2.5"
+    Content = "0.2.6"
 })
 local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -299,67 +332,7 @@ local function createReachCircle()
 end
 
 
-local function onQuantumInputBegan(input, gameProcessedEvent)
-    local ignoredKeys = {
-        [Enum.KeyCode.W] = true,
-        [Enum.KeyCode.A] = true,
-        [Enum.KeyCode.S] = true,
-        [Enum.KeyCode.D] = true,
-        [Enum.KeyCode.Space] = true,
-        [Enum.KeyCode.Slash] = true,
-        [Enum.KeyCode.Semicolon] = true
-    }
 
-    if input.UserInputType == Enum.UserInputType.Keyboard and
-       (input.KeyCode == Enum.KeyCode.Slash or input.KeyCode == Enum.KeyCode.Semicolon) then
-        return
-    end
-
-    if ignoredKeys[input.KeyCode] then return end
-
-    if not gameProcessedEvent then
-        if input.KeyCode == Enum.KeyCode.Comma then
-            reach = math.max(1, reach - 1)
-            StarterGui:SetCore("SendNotification", {
-                Title = "SPJ Reach",
-                Text = "Reach set to " .. reach,
-                Duration = 0.5
-            })
-            createReachCircle()
-        elseif input.KeyCode == Enum.KeyCode.Period then
-            reach = reach + 1
-            StarterGui:SetCore("SendNotification", {
-                Title = "SPJ Reach",
-                Text = "Reach set to " .. reach,
-                Duration = 0.5
-            })
-            createReachCircle()
-        else
-            refreshBalls(false)
-            for _, legName in pairs({"Right Leg", "Left Leg"}) do
-                local leg = player.Character:FindFirstChild(legName)
-                if leg then
-                    for _, v in pairs(leg:GetDescendants()) do
-                        if v.Name == "TouchInterest" and v.Parent then
-                            for _, e in pairs(balls) do
-                                if (e.Position - leg.Position).magnitude < reach then
-                                    if ballOwnerEnabled or (not ballOwners[e] or ballOwners[e] == player) then
-                                        if not ballOwners[e] then
-                                            ballOwners[e] = player
-                                        end
-                                        firetouchinterest(e, v.Parent, 0)
-                                        firetouchinterest(e, v.Parent, 1)
-                                        break
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
 
 
 local function getClosestBall()
@@ -578,7 +551,7 @@ Tabs.Main:AddInput("ReachInput", {
     })
 
 
-    Tabs.Customization:AddColorpicker("BallColorPicker", {
+    Tabs.Ball:AddColorpicker("BallColorPicker", {
         Title = "Ball Color",
         Description = "Change the ball highlight color",
         Default = Color3.fromRGB(255, 0, 0),
@@ -597,7 +570,7 @@ Tabs.Main:AddInput("ReachInput", {
 
 
 end
-Tabs.Main:AddSlider("BallCountSlider", {
+Tabs.Ball:AddSlider("BallCountSlider", {
     Title = "Total Balls in Workspace",
     Description = "Shows the number of balls (updates every second)",
     Default = 0,
@@ -628,7 +601,7 @@ task.spawn(function()
     end
 end)
 
-Tabs.fun:AddSlider('ModifyCurve', {
+Tabs.Ball:AddSlider('ModifyCurve', {
     Title = 'Modify Curve',
     Description = 'Change the curve of the ball',
     Default = 1,
@@ -639,7 +612,7 @@ Tabs.fun:AddSlider('ModifyCurve', {
         game:GetService("ReplicatedStorage").Values.CurveMultiplier.Value = value
     end
 })
-Tabs.fun:AddSlider('ModifyBackSpin', {
+Tabs.Ball:AddSlider('ModifyBackSpin', {
     Title = 'Modify Back Spin',
     Description = 'Change the back spin of the ball',
     Default = 0,
@@ -786,7 +759,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- === UI Integration ===
-Tabs.fun:AddToggle("ControlBallToggle", {
+Tabs.Ball:AddToggle("ControlBallToggle", {
 	Title = "Enable Ball Control",
 	Description = "Toggle free-fly control of the TPS ball",
 	Default = false,
@@ -803,8 +776,83 @@ Tabs.fun:AddToggle("ControlBallToggle", {
 		end
 	end
 })
+local ballHandleEnabled = false
+local ballHandle = nil
 
-Tabs.fun:AddInput("BallSpeedInput", {
+local function createBallHandle(ball)
+	if ballHandle then
+		ballHandle:Destroy()
+	end
+	
+	local handle = Instance.new("SelectionBox")
+	handle.Parent = ball
+	handle.Adornee = ball
+	handle.Color3 = Color3.fromRGB(255, 255, 255)
+	handle.LineThickness = 0.1
+	handle.Transparency = 0.5
+	ballHandle = handle
+end
+
+local function removeBallHandle()
+	if ballHandle then
+		ballHandle:Destroy()
+		ballHandle = nil
+	end
+end
+
+Tabs.Ball:AddToggle("BallHandle", { 
+	Title = "Ball Handle", 
+	Description = "Show selection box around ball", 
+	Default = false, 
+	Callback = function(state)  
+		ballHandleEnabled = state
+		local ball = getTPSBall()
+		if ball and ballHandleEnabled then
+			createBallHandle(ball)
+		else
+			removeBallHandle()
+		end
+	end 
+})
+
+Tabs.Ball:AddInput("BallSize", { 
+	Title = "Ball Size", 
+	Description = "Change the size of the ball", 
+	Default = "2.5", 
+	Placeholder = "2.5", 
+	Numeric = true, 
+	Finished = true, 
+	Callback = function(value) 
+		local ball = getTPSBall()
+		if ball then
+			local size = tonumber(value) or 1
+			ball.Size = Vector3.new(size, size, size)
+			
+			if ballHandleEnabled then
+				createBallHandle(ball)
+			end
+		end
+	end 
+})
+
+Tabs.Ball:AddInput("BallTransparency", { 
+	Title = "Ball Transparency", 
+	Description = "Change the transparency of the ball (0-1)", 
+	Default = "0", 
+	Placeholder = "0", 
+	Numeric = true, 
+	Finished = true, 
+	Callback = function(value) 
+		local ball = getTPSBall()
+		if ball then
+			local transparency = tonumber(value) or 0
+			transparency = math.clamp(transparency, 0, 1)
+			ball.Transparency = transparency
+		end
+	end 
+})
+
+Tabs.Ball:AddInput("BallSpeedInput", {
 	Title = "Control Speed",
 	Description = "Set your ball fly speed (0-1000)",
 	Default = tostring(_G.TPSBallSpeed),
@@ -820,7 +868,7 @@ Tabs.fun:AddInput("BallSpeedInput", {
 })
 
 
-local Keybind = Tabs.fun:AddKeybind("BallControlKeybind", {
+local Keybind = Tabs.Ball:AddKeybind("BallControlKeybind", {
     Title = "Toggle Ball Control (Keybind)",
     Mode = "Toggle", 
     Default = "U",
@@ -878,23 +926,73 @@ Fluent:Notify({
 SaveManager:LoadAutoloadConfig()
 
 
+local function onQuantumInputBegan(input, gameProcessedEvent)
+    local ignoredKeys = {
+        [Enum.KeyCode.W] = true,
+        [Enum.KeyCode.A] = true,
+        [Enum.KeyCode.S] = true,
+        [Enum.KeyCode.D] = true,
+        [Enum.KeyCode.Space] = true,
+        [Enum.KeyCode.Slash] = true,
+        [Enum.KeyCode.Semicolon] = true
+    }
+
+    if input.UserInputType == Enum.UserInputType.Keyboard and
+       (input.KeyCode == Enum.KeyCode.Slash or input.KeyCode == Enum.KeyCode.Semicolon) then
+        return
+    end
+
+    if ignoredKeys[input.KeyCode] then return end
+
+    if not gameProcessedEvent then
+        refreshBalls(false)
+        for _, legName in pairs({"Right Leg", "Left Leg"}) do
+            local leg = player.Character and player.Character:FindFirstChild(legName)
+            if leg then
+                for _, v in pairs(leg:GetDescendants()) do
+                    if v.Name == "TouchInterest" and v.Parent then
+                        for _, e in pairs(balls) do
+                            if e and e.Parent and e.Position and leg.Position and (e.Position - leg.Position).magnitude < reach then
+                                if ballOwnerEnabled or (not ballOwners[e] or ballOwners[e] == player) then
+                                    if not ballOwners[e] then
+                                        ballOwners[e] = player
+                                    end
+                                    pcall(function()
+                                        firetouchinterest(e, v.Parent, 0)
+                                        firetouchinterest(e, v.Parent, 1)
+                                    end)
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 UserInputService.InputBegan:Connect(onQuantumInputBegan)
 
 RunService.RenderStepped:Connect(function()
     for _, legName in pairs({"Right Leg", "Left Leg"}) do
-        local leg = player.Character:FindFirstChild(legName)
+        local leg = player.Character and player.Character:FindFirstChild(legName)
         if leg then
             for _, v in pairs(leg:GetDescendants()) do
                 if v.Name == "TouchInterest" and v.Parent then
                     for _, e in pairs(balls) do
-                        if (e.Position - leg.Position).magnitude < reach then
+                        if e and e.Parent and e.Position and leg.Position and (e.Position - leg.Position).magnitude < reach then
                             if not ballOwners[e] then
                                 ballOwners[e] = player
-                                firetouchinterest(e, v.Parent, 0)
-                                firetouchinterest(e, v.Parent, 1)
+                                pcall(function()
+                                    firetouchinterest(e, v.Parent, 0)
+                                    firetouchinterest(e, v.Parent, 1)
+                                end)
                             elseif ballOwners[e] == player then
-                                firetouchinterest(e, v.Parent, 0)
-                                firetouchinterest(e, v.Parent, 1)
+                                pcall(function()
+                                    firetouchinterest(e, v.Parent, 0)
+                                    firetouchinterest(e, v.Parent, 1)
+                                end)
                             end
                         end
                     end
