@@ -388,7 +388,7 @@ local originalDefault = debounceValue.Value
 
 
 local Input2 = Tabs.fun:AddInput("Input5", {
-    Title = "Changed cooldown of dribble (0.25 = default)",
+    Title = "Changed cooldown of dribble",
     Default = '0.25',
     Placeholder = '0.25',
     Numeric = true,
